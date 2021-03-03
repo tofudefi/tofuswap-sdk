@@ -1,11 +1,11 @@
 import { INIT_CODE_HASH } from '../src/constants'
 
-import { bytecode } from '@tofudefi/tofuswap-v2-core/build/contracts/UniswapV2Pair.json'
+import { bytecode } from '@tofudefi/tofuswap-v2-core/build/TofuswapV2Pair.json'
 import { keccak256 } from '@ethersproject/solidity'
 
 // this _could_ go in constants, except that it would cost every consumer of the sdk the CPU to compute the hash
 // and load the JSON.
-const COMPUTED_INIT_CODE_HASH = keccak256(['bytes'], [bytecode])
+const COMPUTED_INIT_CODE_HASH = keccak256(['bytes'], [`0x${bytecode}`])
 
 describe('constants', () => {
   describe('INIT_CODE_HASH', () => {
