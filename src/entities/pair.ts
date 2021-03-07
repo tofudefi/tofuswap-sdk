@@ -1,74 +1,32 @@
 import { Price } from './fractions/price'
 import { TokenAmount } from './fractions/tokenAmount'
 import invariant from 'tiny-invariant'
-import { Contract } from '@ethersproject/contracts'
-import { BaseProvider } from '@ethersproject/providers'
 import JSBI from 'jsbi'
-// import { pack, keccak256 } from '@ethersproject/solidity'
-// import { getCreate2Address } from '@ethersproject/address'
+import { pack, keccak256 } from '@ethersproject/solidity'
+import { getCreate2Address } from '@ethersproject/address'
 
 import {
   BigintIsh,
-  // FACTORY_ADDRESS,
-  // INIT_CODE_HASH,
+  FACTORY_ADDRESS,
+  INIT_CODE_HASH,
   MINIMUM_LIQUIDITY,
   ZERO,
   ONE,
   FIVE,
   _997,
   _1000,
-  ChainId,
-  FACTORY_ADDRESSES,
-  PAIR_ADDRESSES
+  ChainId
 } from '../constants'
 import { sqrt, parseBigintIsh } from '../utils'
 import { InsufficientReservesError, InsufficientInputAmountError } from '../errors'
 import { Token } from './token'
 
-// let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } = {}
-
-function getFactoryContract(chainId: ChainId, provider: BaseProvider): Contract {
-  // memoize?
-  const address = FACTORY_ADDRESSES[chainId]
-  // todo: put abi in constants?
-  const abi = [
-    {
-      constant: true,
-      inputs: [
-        {
-          internalType: 'address',
-          name: 'tokenA',
-          type: 'address'
-        },
-        {
-          internalType: 'address',
-          name: 'tokenB',
-          type: 'address'
-        }
-      ],
-      name: 'getPair',
-      outputs: [
-        {
-          internalType: 'address',
-          name: 'pair',
-          type: 'address'
-        }
-      ],
-      payable: false,
-      stateMutability: 'view',
-      type: 'function'
-    }
-  ]
-  const contract = new Contract(address, abi, provider)
-  return contract
-}
+let PAIR_ADDRESS_CACHE: { [token0Address: string]: { [token1Address: string]: string } } = {}
 
 export class Pair {
   public readonly liquidityToken: Token
   private readonly tokenAmounts: [TokenAmount, TokenAmount]
 
-  // @TRON
-  /*
   public static getAddress(tokenA: Token, tokenB: Token): string {
     const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
 
@@ -77,8 +35,6 @@ export class Pair {
         ...PAIR_ADDRESS_CACHE,
         [tokens[0].address]: {
           ...PAIR_ADDRESS_CACHE?.[tokens[0].address],
-          // @TODO(tron): this will not work cause our contract does not
-          // use create2
           [tokens[1].address]: getCreate2Address(
             FACTORY_ADDRESS,
             keccak256(['bytes'], [pack(['address', 'address'], [tokens[0].address, tokens[1].address])]),
@@ -89,54 +45,6 @@ export class Pair {
     }
 
     return PAIR_ADDRESS_CACHE[tokens[0].address][tokens[1].address]
-  }
-  */
-
-  private static warningWasDisplayedOnce: boolean = false
-  private static getAddressWarning(tokenA: Token, tokenB: Token): void {
-    if (this.warningWasDisplayedOnce) return
-    this.warningWasDisplayedOnce = true
-    const message = [
-      `Unknown pair contract address for pair ${tokenA.symbol}/${tokenB.symbol} `,
-      `(${tokenA.address}, ${tokenB.address}). `,
-      'Open an issue at https://github.com/tofudefi/tofuswap-sdk/issues ',
-      'with this error message to get the pair added. ',
-      'You can also add the pair to PAIR_ADDRESSES in ',
-      'https://github.com/tofudefi/tofuswap-sdk/blob/master/src/constants.ts ',
-      'and send a pull request (if you know how!).'
-    ].join('')
-    if (typeof window === 'undefined') {
-      console.warn(message)
-    } else {
-      alert(message)
-    }
-  }
-
-  // @TRON
-  // create2 opcode not available :(
-  // For now we just hardcode all pair addresses... :/
-  public static getAddress(tokenA: Token, tokenB: Token): string {
-    // An alternative solution would be to make `getAddress` async (see getAddressAsync for an attempt) but it would require a relatively
-    // large refactor of both swap-interface and swap-sdk...
-    // console.warn('getAddress() is mocked with hardcoded swapv2 pair addresses until TVM implements create2 op code...')
-    const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
-    const pairAddresses = PAIR_ADDRESSES[tokens[0].chainId]
-    const pairAddress: string | undefined =
-      pairAddresses?.[tokens[0].address.toLowerCase()]?.[tokens[1].address.toLowerCase()]
-    if (pairAddress === undefined) {
-      this.getAddressWarning(tokens[0], tokens[1])
-      // return a dummy address to avoid breaking swap-interface
-      return '0xdEADBEeF00000000000000000000000000000000'
-    }
-    return pairAddress
-  }
-
-  // TODO(tron): implement caching logic
-  public static async getAddressAsync(tokenA: Token, tokenB: Token, provider: BaseProvider): Promise<string> {
-    // TODO: cache pair addresses...
-    const contract = getFactoryContract(tokenA.chainId, provider)
-    const pairAddress = await contract.getPair(tokenA.address, tokenB.address)
-    return pairAddress
   }
 
   public constructor(tokenAmountA: TokenAmount, tokenAmountB: TokenAmount) {
@@ -219,6 +127,7 @@ export class Pair {
     }
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
+    // need update
     const inputAmountWithFee = JSBI.multiply(inputAmount.raw, _997)
     const numerator = JSBI.multiply(inputAmountWithFee, outputReserve.raw)
     const denominator = JSBI.add(JSBI.multiply(inputReserve.raw, _1000), inputAmountWithFee)
