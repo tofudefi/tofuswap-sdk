@@ -1,5 +1,5 @@
 import { currencyEquals } from '../token'
-import { Currency, ETHER } from '../currency'
+import { Currency, TRX } from '../currency'
 import invariant from 'tiny-invariant'
 import JSBI from 'jsbi'
 import _Big from 'big.js'
@@ -15,11 +15,11 @@ export class CurrencyAmount extends Fraction {
   public readonly currency: Currency
 
   /**
-   * Helper that calls the constructor with the ETHER currency
+   * Helper that calls the constructor with the TRX currency
    * @param amount ether amount in wei
    */
-  public static ether(amount: BigintIsh): CurrencyAmount {
-    return new CurrencyAmount(ETHER, amount)
+  public static trx(amount: BigintIsh): CurrencyAmount {
+    return new CurrencyAmount(TRX, amount)
   }
 
   // amount _must_ be raw, i.e. in the native representation

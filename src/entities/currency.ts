@@ -18,7 +18,7 @@ export class Currency {
    */
   // @TRON
   // public static readonly ETHER: Currency = new Currency(18, 'ETH', 'Ether')
-  public static readonly ETHER: Currency = new Currency(6, 'TRX', 'Tron')
+  public static readonly TRX: Currency = new Currency(6, 'TRX', 'Tron')
 
   /**
    * Constructs an instance of the base class `Currency`. The only instance of the base class `Currency` is `Currency.ETHER`.
@@ -35,5 +35,5 @@ export class Currency {
   }
 }
 
-const ETHER = Currency.ETHER
-export { ETHER }
+const TRX = Currency.TRX
+export { TRX }

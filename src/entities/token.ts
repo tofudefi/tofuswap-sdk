@@ -57,7 +57,7 @@ export function currencyEquals(currencyA: Currency, currencyB: Currency): boolea
 }
 
 // TODO: TRON: deploy WTRX and set contract addresses here
-export const WETH = {
+export const WTRX = {
   // TODO: TRON: deploy WTRX on mainnet
   [ChainId.MAINNET]: new Token(
     // Deployed by Tron Foundation
