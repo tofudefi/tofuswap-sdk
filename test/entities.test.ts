@@ -103,49 +103,50 @@ describe('entities', () => {
           route = new Route(
             [
               new Pair(
-                new TokenAmount(tokens[1], decimalize(5, tokens[1].decimals)),
-                new TokenAmount(WTRX, decimalize(10, WTRX.decimals))
+                new TokenAmount(tokens[1], decimalize(500, tokens[1].decimals)),
+                new TokenAmount(WTRX, decimalize(1000, WTRX.decimals))
               )
             ],
             tokens[1]
           )
-          const inputAmount = new TokenAmount(tokens[1], decimalize(1, tokens[1].decimals))
-          const expectedOutputAmount = new TokenAmount(WTRX, '1662497915624478906')
+          const inputAmount = new TokenAmount(tokens[1], decimalize(100, tokens[1].decimals))
+          const expectedOutputAmount = new TokenAmount(WTRX, '166249791')
           const trade = new Trade(route, inputAmount, TradeType.EXACT_INPUT)
           expect(trade.route).toEqual(route)
           expect(trade.tradeType).toEqual(TradeType.EXACT_INPUT)
           expect(trade.inputAmount).toEqual(inputAmount)
           expect(trade.outputAmount).toEqual(expectedOutputAmount)
 
-          expect(trade.executionPrice.toSignificant(18)).toEqual('1.66249791562447891')
-          expect(trade.executionPrice.invert().toSignificant(18)).toEqual('0.601504513540621866')
+          expect(trade.executionPrice.toSignificant(18)).toEqual('1.66249791')
+          expect(trade.executionPrice.invert().toSignificant(18)).toEqual('0.601504515575601536')
           expect(trade.executionPrice.quote(inputAmount)).toEqual(expectedOutputAmount)
           expect(trade.executionPrice.invert().quote(expectedOutputAmount)).toEqual(inputAmount)
 
-          expect(trade.nextMidPrice.toSignificant(18)).toEqual('1.38958368072925352')
-          expect(trade.nextMidPrice.invert().toSignificant(18)).toEqual('0.71964')
+          expect(trade.nextMidPrice.toSignificant(18)).toEqual('1.38958368166666667')
+          expect(trade.nextMidPrice.invert().toSignificant(18)).toEqual('0.719639999514530856')
 
-          expect(trade.priceImpact.toSignificant(18)).toEqual('16.8751042187760547')
+          expect(trade.priceImpact.toSignificant(18)).toEqual('16.8751045')
         })
 
         it('TradeType.EXACT_OUTPUT', () => {
-          const outputAmount = new TokenAmount(WTRX, '1662497915624478906')
-          const expectedInputAmount = new TokenAmount(tokens[1], decimalize(1, tokens[1].decimals))
+        
+          const outputAmount = new TokenAmount(WTRX, '166249791')
+          const expectedInputAmount = new TokenAmount(tokens[1], decimalize(100, tokens[1].decimals))
           const trade = new Trade(route, outputAmount, TradeType.EXACT_OUTPUT)
           expect(trade.route).toEqual(route)
           expect(trade.tradeType).toEqual(TradeType.EXACT_OUTPUT)
           expect(trade.outputAmount).toEqual(outputAmount)
-          expect(trade.inputAmount).toEqual(expectedInputAmount)
+          expect(trade.inputAmount.toSignificant(8,{ groupSeparator: '' }, Rounding.ROUND_UP)).toEqual(expectedInputAmount.toSignificant(8))
 
-          expect(trade.executionPrice.toSignificant(18)).toEqual('1.66249791562447891')
-          expect(trade.executionPrice.invert().toSignificant(18)).toEqual('0.601504513540621866')
+          expect(trade.executionPrice.toSignificant(8)).toEqual('1.6624979')
+          expect(trade.executionPrice.invert().toSignificant(7)).toEqual('0.6015045')
           expect(trade.executionPrice.quote(expectedInputAmount)).toEqual(outputAmount)
-          expect(trade.executionPrice.invert().quote(outputAmount)).toEqual(expectedInputAmount)
+          expect(trade.executionPrice.invert().quote(outputAmount).toSignificant(8,{ groupSeparator: '' }, Rounding.ROUND_UP)).toEqual(expectedInputAmount.toSignificant(8))
 
-          expect(trade.nextMidPrice.toSignificant(18)).toEqual('1.38958368072925352')
-          expect(trade.nextMidPrice.invert().toSignificant(18)).toEqual('0.71964')
+          expect(trade.nextMidPrice.toSignificant(9)).toEqual('1.38958368')
+          expect(trade.nextMidPrice.invert().toSignificant(5)).toEqual('0.71964')
 
-          expect(trade.priceImpact.toSignificant(18)).toEqual('16.8751042187760547')
+          expect(trade.priceImpact.toSignificant(10)).toEqual(tokens[1].decimals === 0 ? '16.8751045' : '16.87510416')
         })
 
         it('minimum TradeType.EXACT_INPUT', () => {
@@ -156,7 +157,7 @@ describe('entities', () => {
                   new TokenAmount(tokens[1], decimalize(1, tokens[1].decimals)),
                   new TokenAmount(
                     WTRX,
-                    decimalize(10, WTRX.decimals) +
+                    decimalize(10000000000000, WTRX.decimals) +
                       (tokens[1].decimals === 9 ? BigInt('30090280812437312') : BigInt('30090270812437322'))
                   )
                 )
@@ -174,7 +175,7 @@ describe('entities', () => {
       })
 
       it('TokenAmount', () => {
-        const amount = new TokenAmount(WTRX, '1234567000000000000000')
+        const amount = new TokenAmount(WTRX, '1234567000')
         expect(amount.toExact()).toEqual('1234.567')
         expect(amount.toExact({ groupSeparator: ',' })).toEqual('1,234.567')
       })
