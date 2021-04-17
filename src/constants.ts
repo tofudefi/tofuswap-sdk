@@ -20,11 +20,13 @@ export enum Rounding {
   ROUND_UP
 }
 
-// TODO(tron): nile address is 0x41DA32Ec09Fb54aB5f5742F1eB730003caaC0BbF
-//export const FACTORY_ADDRESS = '0x040A3d84309784628290b9f3437874868beE30Af'
-export const FACTORY_ADDRESS = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
+// mainnet
+export const FACTORY_ADDRESS = '0xc31f30448cb48d0822c0e94573b1fb7671883e09'
 
-export const INIT_CODE_HASH = '0x67362b6851b5759acb891575dad6796f51c77306b174ae6c6fd05882d9bd1bf3'
+// local tests
+//export const INIT_CODE_HASH = '0x67362b6851b5759acb891575dad6796f51c77306b174ae6c6fd05882d9bd1bf3'
+//mainnet
+export const INIT_CODE_HASH = '0x9a276da79c5556bb068dcd272cffa5b6a813c757c1d161722caaf65234be463b'
 
 export const MINIMUM_LIQUIDITY = JSBI.BigInt(1000)
 
