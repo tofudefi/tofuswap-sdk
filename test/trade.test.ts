@@ -10,7 +10,8 @@ import {
   TokenAmount,
   Trade,
   TradeType,
-  WTRX
+  WTRX,
+  TOFU_FREEZER_ADDRESS
 } from '../src'
 
 describe('Trade', () => {
@@ -18,12 +19,16 @@ describe('Trade', () => {
   const token1 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000002', 18, 't1')
   const token2 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000003', 18, 't2')
   const token3 = new Token(ChainId.MAINNET, '0x0000000000000000000000000000000000000004', 18, 't3')
+  const tofuFreezer = new Token(ChainId.MAINNET, TOFU_FREEZER_ADDRESS, 6, 'TofuFreezer')
 
   const pair_0_1 = new Pair(new TokenAmount(token0, JSBI.BigInt(1000)), new TokenAmount(token1, JSBI.BigInt(1000)))
   const pair_0_2 = new Pair(new TokenAmount(token0, JSBI.BigInt(1000)), new TokenAmount(token2, JSBI.BigInt(1100)))
   const pair_0_3 = new Pair(new TokenAmount(token0, JSBI.BigInt(1000)), new TokenAmount(token3, JSBI.BigInt(900)))
   const pair_1_2 = new Pair(new TokenAmount(token1, JSBI.BigInt(1200)), new TokenAmount(token2, JSBI.BigInt(1000)))
   const pair_1_3 = new Pair(new TokenAmount(token1, JSBI.BigInt(1200)), new TokenAmount(token3, JSBI.BigInt(1300)))
+  const pair_2_3 = new Pair(new TokenAmount(token2, JSBI.BigInt(100000000000000000000)), new TokenAmount(token3, JSBI.BigInt(100000000000000000000)))
+
+  const tofuFreezed100 = new TokenAmount(tofuFreezer, JSBI.BigInt(100000000))
 
   const pair_wtrx_0 = new Pair(
     new TokenAmount(WTRX[ChainId.MAINNET], JSBI.BigInt(1000)),
@@ -399,6 +404,19 @@ describe('Trade', () => {
       expect(result[1].inputAmount.currency).toEqual(token3)
       expect(result[1].route.path).toEqual([token3, token1, token0, WTRX[ChainId.MAINNET]])
       expect(result[1].outputAmount.currency).toEqual(TRX)
+    })
+    it('freezer discount', () => {
+      const result = Trade.bestTradeExactOut(
+        [pair_2_3],
+        token2,
+        new TokenAmount(token3, JSBI.BigInt(1000000000000000000)),
+        { maxHops: 1 },
+        tofuFreezed100
+      )
+      expect(result).toHaveLength(1)
+      expect(result[0].outputAmount).toEqual(new TokenAmount(token3, JSBI.BigInt(1000000000000000000)))
+      console.log(result[0].inputAmount.toFixed(18))
+      expect(result[0].inputAmount.toFixed(18)).toEqual('1.012632591579960002')
     })
   })
 })

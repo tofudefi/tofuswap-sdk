@@ -1,4 +1,5 @@
-import { ChainId, Token, Pair, TokenAmount, WTRX, Price } from '../src'
+import { ChainId, Token, Pair, TokenAmount, WTRX, Price, TOFU_FREEZER_ADDRESS } from '../src'
+import JSBI from 'jsbi'
 
 describe('Pair', () => {
   const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 18, 'USDC', 'USD Coin')
@@ -14,7 +15,8 @@ describe('Pair', () => {
 
   describe('#getAddress', () => {
     it('returns the correct address', () => {
-      expect(Pair.getAddress(USDC, DAI)).toEqual('0xb5040Ada89569Fe2D8eaf615ab6D9401De86062f')
+      //expect(Pair.getAddress(USDC, DAI)).toEqual('0xb5040Ada89569Fe2D8eaf615ab6D9401De86062f')
+      expect(Pair.getAddress(USDC, DAI)).toEqual('0x6324A243BB6925FC1025485e901139203144B653')
     })
   })
 
@@ -114,5 +116,27 @@ describe('Pair', () => {
     expect(
       new Pair(new TokenAmount(USDC, '100'), new TokenAmount(DAI, '100')).involvesToken(WTRX[ChainId.MAINNET])
     ).toEqual(false)
+  })
+  describe('#freezerDiscount', () => {
+    const pair = new Pair(new TokenAmount(USDC, '100000000000000000000'), new TokenAmount(DAI, '100000000000000000000'))
+    const tofuFreezer = new Token(ChainId.MAINNET, TOFU_FREEZER_ADDRESS, 6, 'TofuFreezer')
+    const tofuFreezed100 = new TokenAmount(tofuFreezer, JSBI.BigInt(100000000))
+    const tofuFreezed1001 = new TokenAmount(tofuFreezer, JSBI.BigInt(1001000000))
+    const tofuFreezed10002 = new TokenAmount(tofuFreezer, JSBI.BigInt(10002000000))
+    const tofuFreezed100000 = new TokenAmount(tofuFreezer, JSBI.BigInt(100000000000))
+
+    it('returns getOutputAmount with freeze', () => {
+      const amount = new TokenAmount(USDC, JSBI.BigInt(1000000000000000000))
+      expect(pair.getOutputAmount(amount, tofuFreezed100)[0].toFixed(18)).toEqual('0.987648209114086982')
+      expect(pair.getOutputAmount(amount, tofuFreezed1001)[0].toFixed(18)).toEqual('0.988138378977801540')
+      expect(pair.getOutputAmount(amount, tofuFreezed10002)[0].toFixed(18)).toEqual('0.988628543988277053')
+      expect(pair.getOutputAmount(amount, tofuFreezed100000)[0].toFixed(18)).toEqual('0.989118704145585599')
+    })
+    it('returns getInputAmount with freeze', () => {
+      const amount = new TokenAmount(USDC, JSBI.BigInt(1000000000000000000))
+      expect(pair.getInputAmount(amount, tofuFreezed100)[0].toFixed(18)).toEqual(  '1.012632591579960002')
+      expect(pair.getInputAmount(amount, tofuFreezed1001)[0].toFixed(18)).toEqual( '1.012125260622254611')
+      expect(pair.getInputAmount(amount, tofuFreezed10002)[0].toFixed(18)).toEqual('1.011618437757646571')
+    })
   })
 })
