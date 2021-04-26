@@ -113,6 +113,10 @@ export class Trade {
    */
   public readonly tradeType: TradeType
   /**
+   * The amount of freezed TOFU to calculate actual fee.
+   */
+  public readonly tofuFreezed: TokenAmount | undefined
+  /**
    * The input amount for the trade assuming no slippage.
    */
   public readonly inputAmount: CurrencyAmount
@@ -151,7 +155,8 @@ export class Trade {
     return new Trade(route, amountOut, TradeType.EXACT_OUTPUT)
   }
 
-  public constructor(route: Route, amount: CurrencyAmount, tradeType: TradeType) {
+  public constructor(route: Route, amount: CurrencyAmount, tradeType: TradeType, tofuFreezedAmount?: TokenAmount | undefined) {
+    this.tofuFreezed = tofuFreezedAmount
     const amounts: TokenAmount[] = new Array(route.path.length)
     const nextPairs: Pair[] = new Array(route.pairs.length)
     if (tradeType === TradeType.EXACT_INPUT) {
@@ -159,7 +164,7 @@ export class Trade {
       amounts[0] = wrappedAmount(amount, route.chainId)
       for (let i = 0; i < route.path.length - 1; i++) {
         const pair = route.pairs[i]
-        const [outputAmount, nextPair] = pair.getOutputAmount(amounts[i])
+        const [outputAmount, nextPair] = pair.getOutputAmount(amounts[i], this.tofuFreezed)
         amounts[i + 1] = outputAmount
         nextPairs[i] = nextPair
       }
@@ -168,7 +173,7 @@ export class Trade {
       amounts[amounts.length - 1] = wrappedAmount(amount, route.chainId)
       for (let i = route.path.length - 1; i > 0; i--) {
         const pair = route.pairs[i - 1]
-        const [inputAmount, nextPair] = pair.getInputAmount(amounts[i])
+        const [inputAmount, nextPair] = pair.getInputAmount(amounts[i], this.tofuFreezed)
         amounts[i - 1] = inputAmount
         nextPairs[i - 1] = nextPair
       }
@@ -252,6 +257,7 @@ export class Trade {
     currencyAmountIn: CurrencyAmount,
     currencyOut: Currency,
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
+    tofuFreezedAmount?: TokenAmount | undefined,
     // used in recursion.
     currentPairs: Pair[] = [],
     originalAmountIn: CurrencyAmount = currencyAmountIn,
@@ -278,7 +284,7 @@ export class Trade {
 
       let amountOut: TokenAmount
       try {
-        ;[amountOut] = pair.getOutputAmount(amountIn)
+        ;[amountOut] = pair.getOutputAmount(amountIn, tofuFreezedAmount)
       } catch (error) {
         // input too low
         if (error.isInsufficientInputAmountError) {
@@ -293,7 +299,8 @@ export class Trade {
           new Trade(
             new Route([...currentPairs, pair], originalAmountIn.currency, currencyOut),
             originalAmountIn,
-            TradeType.EXACT_INPUT
+            TradeType.EXACT_INPUT,
+            tofuFreezedAmount
           ),
           maxNumResults,
           tradeComparator
@@ -310,6 +317,7 @@ export class Trade {
             maxNumResults,
             maxHops: maxHops - 1
           },
+          tofuFreezedAmount,
           [...currentPairs, pair],
           originalAmountIn,
           bestTrades
@@ -340,6 +348,7 @@ export class Trade {
     currencyIn: Currency,
     currencyAmountOut: CurrencyAmount,
     { maxNumResults = 3, maxHops = 3 }: BestTradeOptions = {},
+    tofuFreezedAmount?: TokenAmount | undefined,
     // used in recursion.
     currentPairs: Pair[] = [],
     originalAmountOut: CurrencyAmount = currencyAmountOut,
@@ -366,7 +375,7 @@ export class Trade {
 
       let amountIn: TokenAmount
       try {
-        ;[amountIn] = pair.getInputAmount(amountOut)
+        ;[amountIn] = pair.getInputAmount(amountOut, tofuFreezedAmount)
       } catch (error) {
         // not enough liquidity in this pair
         if (error.isInsufficientReservesError) {
@@ -381,7 +390,8 @@ export class Trade {
           new Trade(
             new Route([pair, ...currentPairs], currencyIn, originalAmountOut.currency),
             originalAmountOut,
-            TradeType.EXACT_OUTPUT
+            TradeType.EXACT_OUTPUT,
+            tofuFreezedAmount
           ),
           maxNumResults,
           tradeComparator
@@ -398,6 +408,7 @@ export class Trade {
             maxNumResults,
             maxHops: maxHops - 1
           },
+          tofuFreezedAmount,
           [pair, ...currentPairs],
           originalAmountOut,
           bestTrades

@@ -40,8 +40,16 @@ export const THREE = JSBI.BigInt(3)
 export const FIVE = JSBI.BigInt(5)
 export const TEN = JSBI.BigInt(10)
 export const _100 = JSBI.BigInt(100)
-export const _997 = JSBI.BigInt(997)
-export const _1000 = JSBI.BigInt(1000)
+export const _9970 = JSBI.BigInt(9970)
+export const _9975 = JSBI.BigInt(9975)
+export const _9980 = JSBI.BigInt(9980)
+export const _9985 = JSBI.BigInt(9985)
+export const _9990 = JSBI.BigInt(9990)
+export const _10000 = JSBI.BigInt(10000)
+export const _100000000 = JSBI.BigInt(100000000)
+export const _1000000000 = JSBI.BigInt(1000000000)
+export const _10000000000 = JSBI.BigInt(10000000000)
+export const _100000000000 = JSBI.BigInt(100000000000)
 
 export enum SolidityType {
   uint8 = 'uint8',

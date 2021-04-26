@@ -13,8 +13,16 @@ import {
   ZERO,
   ONE,
   FIVE,
-  _997,
-  _1000,
+  _9970,
+  _9975,
+  _9980,
+  _9985,
+  _9990,
+  _10000,
+  _100000000,
+  _1000000000,
+  _10000000000,
+  _100000000000,
   ChainId
 } from '../constants'
 import { sqrt, parseBigintIsh } from '../utils'
@@ -120,7 +128,7 @@ export class Pair {
     return token.equals(this.token0) ? this.reserve0 : this.reserve1
   }
 
-  public getOutputAmount(inputAmount: TokenAmount): [TokenAmount, Pair] {
+  public getOutputAmount(inputAmount: TokenAmount, tofuFreezedAmount?: TokenAmount | undefined ): [TokenAmount, Pair] {
     invariant(this.involvesToken(inputAmount.token), 'TOKEN')
     if (JSBI.equal(this.reserve0.raw, ZERO) || JSBI.equal(this.reserve1.raw, ZERO)) {
       throw new InsufficientReservesError()
@@ -128,9 +136,9 @@ export class Pair {
     const inputReserve = this.reserveOf(inputAmount.token)
     const outputReserve = this.reserveOf(inputAmount.token.equals(this.token0) ? this.token1 : this.token0)
     // need update
-    const inputAmountWithFee = JSBI.multiply(inputAmount.raw, _997)
+    const inputAmountWithFee = JSBI.multiply(inputAmount.raw, this.getFeeCoefficient(tofuFreezedAmount))
     const numerator = JSBI.multiply(inputAmountWithFee, outputReserve.raw)
-    const denominator = JSBI.add(JSBI.multiply(inputReserve.raw, _1000), inputAmountWithFee)
+    const denominator = JSBI.add(JSBI.multiply(inputReserve.raw, _10000), inputAmountWithFee)
     const outputAmount = new TokenAmount(
       inputAmount.token.equals(this.token0) ? this.token1 : this.token0,
       JSBI.divide(numerator, denominator)
@@ -141,7 +149,7 @@ export class Pair {
     return [outputAmount, new Pair(inputReserve.add(inputAmount), outputReserve.subtract(outputAmount))]
   }
 
-  public getInputAmount(outputAmount: TokenAmount): [TokenAmount, Pair] {
+  public getInputAmount(outputAmount: TokenAmount, tofuFreezedAmount?: TokenAmount | undefined): [TokenAmount, Pair] {
     invariant(this.involvesToken(outputAmount.token), 'TOKEN')
     if (
       JSBI.equal(this.reserve0.raw, ZERO) ||
@@ -153,8 +161,8 @@ export class Pair {
 
     const outputReserve = this.reserveOf(outputAmount.token)
     const inputReserve = this.reserveOf(outputAmount.token.equals(this.token0) ? this.token1 : this.token0)
-    const numerator = JSBI.multiply(JSBI.multiply(inputReserve.raw, outputAmount.raw), _1000)
-    const denominator = JSBI.multiply(JSBI.subtract(outputReserve.raw, outputAmount.raw), _997)
+    const numerator = JSBI.multiply(JSBI.multiply(inputReserve.raw, outputAmount.raw), _10000)
+    const denominator = JSBI.multiply(JSBI.subtract(outputReserve.raw, outputAmount.raw), this.getFeeCoefficient(tofuFreezedAmount))
     const inputAmount = new TokenAmount(
       outputAmount.token.equals(this.token0) ? this.token1 : this.token0,
       JSBI.add(JSBI.divide(numerator, denominator), ONE)
@@ -225,5 +233,24 @@ export class Pair {
       token,
       JSBI.divide(JSBI.multiply(liquidity.raw, this.reserveOf(token).raw), totalSupplyAdjusted.raw)
     )
+  }
+
+  private getFeeCoefficient(tofuFreezedAmount?: TokenAmount | undefined){
+    if (tofuFreezedAmount === undefined) {
+      return _9970
+    }
+    if ( JSBI.greaterThanOrEqual(tofuFreezedAmount.numerator, _100000000000)) {
+      return _9990
+    }
+    if ( JSBI.greaterThanOrEqual(tofuFreezedAmount.numerator, _10000000000)) {
+      return _9985
+    }
+    if ( JSBI.greaterThanOrEqual(tofuFreezedAmount.numerator, _1000000000)) {
+      return _9980
+    }
+    if ( JSBI.greaterThanOrEqual(tofuFreezedAmount.numerator, _100000000)) {
+      return _9975
+    }
+    return _9970
   }
 }
