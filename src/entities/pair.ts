@@ -1,5 +1,7 @@
 import { Price } from './fractions/price'
 import { TokenAmount } from './fractions/tokenAmount'
+import { Percent } from './fractions/percent'
+import { TOFU_FREEZER_ADDRESS } from '../constants'
 import invariant from 'tiny-invariant'
 import JSBI from 'jsbi'
 import { pack, keccak256 } from '@ethersproject/solidity'
@@ -239,6 +241,10 @@ export class Pair {
     if (tofuFreezedAmount === undefined) {
       return _9970
     }
+
+    // should be checksumed address
+    invariant(tofuFreezedAmount.token.address === TOFU_FREEZER_ADDRESS, 'TOFU_FREEZER_ADDRESS')
+
     if ( JSBI.greaterThanOrEqual(tofuFreezedAmount.numerator, _100000000000)) {
       return _9990
     }
@@ -252,5 +258,9 @@ export class Pair {
       return _9975
     }
     return _9970
+  }
+
+  public getFeePercent(tofuFreezedAmount?: TokenAmount | undefined){
+    return new Percent(this.getFeeCoefficient(tofuFreezedAmount), _10000)
   }
 }
